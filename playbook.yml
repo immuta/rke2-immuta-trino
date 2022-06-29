@@ -1,0 +1,65 @@
+---
+- name: RKE2-Immuta-Trino
+  hosts: localhost
+  roles:
+    #- aws #Optional - Creates an nlb|target_group|r53 for our DNS entries below
+    - rke2 
+    - immuta
+    - trino
+
+  vars:
+    #External immuta URL
+    immuta_url: reb.immuta.ps
+    immuta_version: 2022.1.3
+
+    # External Trino URL
+    trino_url: reb-trino.immuta.ps
+    trino_version: 387
+
+    helm_version: v3.9.0
+    immuta_deploy_tools_version: 2.1.5
+
+    #aws_target_group_name: immuta-trino-rebtest
+    #aws_vpc_id: vpc-031002f2d1e57698a
+    #aws_network_lb_name: immuta-trino-rebtest
+    #aws_region: us-east-1
+    #aws_network_lb_subnets:
+    #  - subnet-0a6c6cf8b47346f20
+    #aws_certificate_arn: arn:aws:acm:us-east-1:231431240278:certificate/a7c5b5cc-66c7-4b48-9df2-d3007d2e4a6d
+    #aws_r53_hosted_zone_id: Z0119470FB4KZWFUOWZB
+    #enable_proxy: yes
+    
+    # Immuta k8s namespace
+    immuta_namespace: immuta
+
+    # Initial immuta User
+    immuta_admin_userid: admin@immuta.com
+
+    # Initial user's apikey
+    immuta_apikey: admin@immuta.com
+    
+    # Scrypt hash of initial user's password (this is immutaadmin); see: https://runkit.com/embed/l4wz13q6jbrh
+    immuta_admin_password_hash: c2NyeXB0AA4AAAAIAAAAAaatGqEHwOLRGjUh7sKeaLdGiuaYMzCYVYTYh7lebQkXBAvQPi8O335/K+StCI3Q6al3FRBvqfzrysjFvY0XSNx5yeENFw5oh/zjJJYVRQVE
+    
+    # apikey for immuta trino native integration
+    immuta_trino_apikey: 8675309abcd1234
+    
+    # service account for immuta in trino
+    immuta_trino_service_account_user: immuta_system_account
+    
+    # trino account passwords (htpasswd -B -C 10 -n password.db immuta_system_account) - this is immutaadmin
+    immuta_trino_service_account_password: $2y$10$NdrfZ5ijvLulPbBH54vbMeb8yfQlxJvDd5.7IxnmTBzO74PpynGhm
+    immuta_admin_trino_password: $2y$10$NdrfZ5ijvLulPbBH54vbMeb8yfQlxJvDd5.7IxnmTBzO74PpynGhm
+    
+    #Connect an initial Postgresql instance to trino, e.g.
+    rds_uri: jdbc:postgresql://demo.cfzynskvahpp.us-east-1.rds.amazonaws.com:5432/postgres
+    rds_password: "{{ lookup('env', 'RDS_PASSWORD') | default('postgres', True) }}"
+    
+
+    trino_namespace: trino
+    trino_image: registry.immuta.com/immuta/immuta-trino
+    trino_image_tag: 387
+    trino_immuta_catalog_name: immuta
+
+    # Seed an immuta license
+    immuta_license: 

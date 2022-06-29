@@ -1,0 +1,7 @@
+*.rpm
+*.tar
+*.tar.gz
+*.tgz
+.venv
+*.zip
+*.zst

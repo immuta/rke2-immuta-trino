@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-ingress-immuta
+  namespace: {{ immuta_namespace }}
+spec:
+  rules:
+  - host: {{ immuta_url }}
+    http:
+      paths:
+      - path: / 
+        pathType: Prefix
+        backend:
+          service:
+            name: immuta-web
+            port:
+              number: 8823
+  ingressClassName: nginx

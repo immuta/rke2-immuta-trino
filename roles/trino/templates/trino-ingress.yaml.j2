@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-ingress-trino
+  namespace: {{ trino_namespace }}
+spec:
+  rules:
+  - host: {{ trino_url }}
+    http:
+      paths:
+      - path: / 
+        pathType: Prefix
+        backend:
+          service:
+            name: trino
+            port:
+              number: 8080
+  ingressClassName: nginx

@@ -1,0 +1,120 @@
+---
+
+- name: generate immuta_metadata_password when not set
+  ansible.builtin.set_fact:
+    immuta_metadata_password: "{{ lookup('password', (immuta_hostname | default(inventory_hostname)) + '/vars/immuta_metadata_password length=30 chars=ascii_letters,digits,hexdigits' ) }}"
+  when: immuta_metadata_password is not defined
+  tags:
+    - password
+
+- name: generate immuta_query_engine_password when not set
+  ansible.builtin.set_fact:
+    immuta_query_engine_password: "{{ lookup('password', ( immuta_hostname | default(inventory_hostname)) + '/vars/immuta_query_engine_password length=30 chars=ascii_letters,digits,hexdigits' ) }}"
+  when: immuta_query_engine_password is not defined
+  tags:
+    - password
+
+- name: generate superuser_password when not set
+  ansible.builtin.set_fact:
+    superuser_password: "{{ lookup('password', (immuta_hostname | default(inventory_hostname)) + '/vars/superuser_password length=30 chars=ascii_letters,digits,hexdigits' ) }}"
+  when: superuser_password is not defined
+  tags:
+    - password
+
+- name: generate patroni_password when not set
+  ansible.builtin.set_fact:
+    patroni_password: "{{ lookup('password', (immuta_hostname | default(inventory_hostname)) + '/vars/patroni_password length=30 chars=ascii_letters,digits,hexdigits' ) }}"
+  when: patroni_password is not defined
+  tags:
+    - password
+
+- name: Create a temp dir for immuta images
+  ansible.builtin.file:
+    state: directory
+    path: /tmp/immuta
+  register: immuta_tmpdir
+  tags:
+    - immuta
+  
+- name: Unarchive immuta images tarball
+  ansible.builtin.unarchive:
+    src: "immuta-{{ immuta_version }}-all.tar.gz"
+    dest: "{{ immuta_tmpdir.path }}"
+    owner: root
+    group: root
+    mode: '0644'
+    creates: "{{ immuta_tmpdir.path}}/immuta-service-{{ immuta_version }}.tar"
+  tags:
+    - immuta
+
+- name: Load immuta images to containerd k8s.io namepsace
+  environment:
+    CONTAINERD_ADDRESS: /run/k3s/containerd/containerd.sock
+  command: 
+    cmd: "/var/lib/rancher/rke2/bin/ctr -n=k8s.io images import {{ immuta_tmpdir.path }}/{{ item }}"
+  loop:
+    - "immuta-db-{{ immuta_version }}.tar"
+    - "immuta-service-{{ immuta_version }}.tar"
+    - "immuta-fingerprint-{{ immuta_version }}.tar"
+    - "immuta-deploy-tools-{{ immuta_deploy_tools_version }}.tar"
+    - memcached-1.6-alpine.tar
+    #- ingress-nginx-controller-v1.1.0.tar
+  when: immuta_tmpdir.path is defined
+  tags:
+    - immuta
+
+- name: Render ca to fact
+  ansible.builtin.set_fact:
+    immuta_ca_b64: "{{ lookup('file', 'immuta-ca.crt') | b64encode }}"
+  tags:
+    - immuta
+
+- name: Render bim seed file
+  ansible.builtin.template:
+    src: bim.json.j2
+    dest: /tmp/immuta/bim.json
+    owner: root
+    group: root
+    mode: '0644'
+  tags:
+    - immuta
+
+- name: b64encode bim seed file
+  ansible.builtin.set_fact:
+    bim_json_b64: "{{ lookup('file', '/tmp/immuta/bim.json') | b64encode }}"
+  tags:
+    - immuta
+
+- name: Copy immuta manifest to correct location
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "/var/lib/rancher/rke2/server/manifests/{{ item.dest }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - { src: "immuta-helm.yaml.j2", dest: "immuta-helm.yaml" }
+    - { src: "immuta-namespace.yaml.j2", dest: "immuta-namespace.yaml" }
+    - { src: "initial-user.yaml.j2", dest: "initial-user.yaml" }
+    - { src: "immuta-ca.yaml.j2", dest: "immuta-ca.yaml" }
+    - { src: "immuta-ingress.yaml.j2", dest: "immuta-ingress.yaml" }
+  tags:
+    - immuta
+
+- name: Wait for immuta
+  ansible.builtin.uri:
+    url: "https://{{ immuta_url }}"
+    method: GET
+    validate_certs: no
+  register: _result
+  until: _result.status == 200
+  retries: 720 # 720 * 5 seconds = 1hour (60*60/5)
+  delay: 5 # Every 5 seconds
+  tags:
+    - immuta-driver
+
+- name: POST presto drivers
+  ansible.builtin.shell: |
+     curl -k --location --request POST 'https://{{ immuta_url}}/admin/configuration/presto/driver' --header 'Content-Type: multipart/form-data' --header 'Authorization: Bearer {{ immuta_apikey }}' --form 'file[0][filename]=@"{{ role_path }}/files/simbapresto-1.2.18.1019-1.el6.x86_64.rpm"' --form 'file[1][filename]=@"{{ role_path }}/files/SimbaPrestoODBCDriver.lic"'
+  tags:
+    - immuta-driver

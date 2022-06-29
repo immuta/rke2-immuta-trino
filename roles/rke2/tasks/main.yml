@@ -1,0 +1,93 @@
+---
+- name: Create required directory
+  ansible.builtin.file:
+    path: /var/lib/rancher/rke2/agent/images
+    state: directory
+    mode: '0755'
+  tags:
+    - rke2
+
+- name: Copy images tarball to correct location
+  ansible.builtin.copy:
+    src: rke2-images.linux-amd64.tar.zst
+    dest: /var/lib/rancher/rke2/agent/images
+    owner: root
+    group: root
+    mode: '0644'
+  tags:
+    - rke2
+
+- name: Untar rke2 to /usr/local
+  ansible.builtin.unarchive:
+    src: rke2.linux-amd64.tar.gz
+    dest: /usr/local
+  tags:
+    - rke2
+
+- name: Enable and start the rke2 service
+  ansible.builtin.systemd:
+    name: rke2-server.service
+    state: started
+    enabled: yes
+  tags:
+    - rke2
+
+- name: Install helm
+  ansible.builtin.unarchive:
+    src: "helm-{{ helm_version }}-linux-amd64.tar.gz"
+    dest: /usr/local/bin
+    mode: '0755'
+    extra_opts:
+    - --strip-components=1
+    creates: /usr/local/bin/helm
+  tags:
+    - rke2
+
+- name: Install k9s
+  ansible.builtin.unarchive:
+    src: k9s_Linux_x86_64.tar.gz
+    dest: /usr/local/bin
+    mode: '0755' 
+    creates: /usr/local/bin/k9s
+  tags:
+    - rke2
+
+- name: Create .kube directory
+  ansible.builtin.file:
+    path: "{{ lookup('env', 'HOME') }}/.kube"
+    state: directory
+    mode: "0755"
+    owner: "{{ lookup('env', 'USER') }}"
+    group: "{{ lookup('env', 'USER') }}"
+  tags:
+    - rke2
+    
+- name: Create kubeconfig
+  ansible.builtin.copy:
+    remote_src: yes
+    src: /etc/rancher/rke2/rke2.yaml
+    dest: "{{ lookup('env', 'HOME') }}/.kube/config"
+    owner: "{{ lookup('env', 'USER') }}"
+    group: "{{ lookup('env', 'USER') }}"
+    mode: "0600"
+  tags:
+    - rke2
+
+- name: Add rke2 bin to PATH
+  ansible.builtin.copy:
+    dest: /etc/profile.d/rke2-path.sh
+    content: "PATH=/var/lib/rancher/rke2/bin:$PATH"
+  tags:
+    - rke2
+
+#- name: Copy manifest to correct location
+#  ansible.builtin.copy:
+#    src: "{{ item }}"
+#    dest: /var/lib/rancher/rke2/server/manifests
+#    owner: root
+#    group: root
+#    mode: '0644'
+#  loop:
+#    - rke2-ingress-nginx.yaml 
+  #tags:
+  #  - rke2

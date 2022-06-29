@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ca-certs
+  namespace: {{ trino_namespace }}
+data:
+  ca.crt: {{ immuta_ca_b64 }}

@@ -1,0 +1,44 @@
+---
+- name: Load trino images to containerd k8s.io namepsace
+  environment:
+    CONTAINERD_ADDRESS: /run/k3s/containerd/containerd.sock
+  command: 
+    cmd: "/var/lib/rancher/rke2/bin/ctr -n=k8s.io images import {{ role_path }}/files/{{ item }}"
+  loop:
+    - "immuta-trino-{{ trino_version }}.tar"
+  tags:
+    - trino
+
+- name: Copy trino manifest to correct location
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "/var/lib/rancher/rke2/server/manifests/{{ item.dest }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - { src: "trino-helm.yaml.j2", dest: "trino-helm.yaml" }
+    - { src: "trino-namespace.yaml.j2", dest: "trino-namespace.yaml" }
+    - { src: "trino-ca.yaml.j2", dest: "trino-ca.yaml" }
+    - { src: "trino-ingress.yaml.j2", dest: "trino-ingress.yaml" }
+  tags:
+    - trino
+
+- name: install trino-cli dependencies
+  ansible.builtin.yum:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - java-11-openjdk
+
+- name: Copy trino cli
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "/usr/local/bin/{{ item.dest }}"
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - { src: "trino-cli-{{ trino_version }}-executable.jar", dest: "trino-cli" }
+  tags:
+    - trino
