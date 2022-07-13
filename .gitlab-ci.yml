@@ -1,13 +1,14 @@
 variables:
-    immuta_version: 2022.1.3
+    immuta_version: 2022.2.0
     artifacts_bucket: immuta-ps-share
     driver_bucket: immuta-drivers
     immuta_trino_bucket: immuta-trino-image
-    trino_version: 387
+    trino_version: 389
     helm_version: v3.9.0
-    rke2_version: v1.23.7
+    rke2_version: v1.23.8
     rke2_release: '%2Brke2r2'
     cli_version: v1.0.0
+    k9s_version: v0.35.21
 
 .build-immuta-trino: &trino
     image: alpine:latest
@@ -21,9 +22,9 @@ variables:
         - aws s3 cp immuta-trino-$trino_version.tar s3://immuta-trino-image/
     when: manual
 
-trino:387:
+trino:389:
     variables:
-        trino_version: 387
+        trino_version: 389 
     <<: *trino
 
 create_package:
@@ -43,7 +44,7 @@ create_package:
       - cd roles/rke2/files
       - wget -q https://github.com/rancher/rke2/releases/download/${rke2_version}${rke2_release}/rke2-images.linux-amd64.tar.zst
       - wget -q https://github.com/rancher/rke2/releases/download/${rke2_version}${rke2_release}/rke2.linux-amd64.tar.gz
-      - wget -q https://github.com/derailed/k9s/releases/download/v0.25.20/k9s_Linux_x86_64.tar.gz
+      - wget -q https://github.com/derailed/k9s/releases/download/${k9s_version}/k9s_Linux_x86_64.tar.gz
       - wget -q https://get.helm.sh/helm-${helm_version}-linux-amd64.tar.gz
       - cd -
 
@@ -57,6 +58,3 @@ create_package:
       - ls -lh
       - aws s3 cp immuta-$immuta_version-trino-$trino_version-rke2-$rke2_version.tar.gz s3://immuta-rke2/
     when: manual
-    artifacts:
-        paths:
-            - immuta-$immuta_version-trino-$trino_version-rke2-$rke2_version.tar.gz
