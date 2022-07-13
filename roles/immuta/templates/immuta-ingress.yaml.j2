@@ -3,12 +3,16 @@ kind: Ingress
 metadata:
   name: nginx-ingress-immuta
   namespace: {{ immuta_namespace }}
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: {{ immuta_url }}
+    nginx.ingress.kubernetes.io/secure-backends: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
 spec:
   rules:
   - host: {{ immuta_url }}
     http:
       paths:
-      - path: / 
+      - path: /
         pathType: Prefix
         backend:
           service:
