@@ -2,7 +2,6 @@
 - name: RKE2-Immuta-Trino
   hosts: localhost
   roles:
-    #- aws #Optional - Creates an nlb|target_group|r53 for our DNS entries below
     - rke2 
     - immuta
     - trino
@@ -19,16 +18,6 @@
     helm_version: v3.9.0
     immuta_deploy_tools_version: 2.1.5
 
-    #aws_target_group_name: immuta-trino-rebtest
-    #aws_vpc_id: vpc-031002f2d1e57698a
-    #aws_network_lb_name: immuta-trino-rebtest
-    #aws_region: us-east-1
-    #aws_network_lb_subnets:
-    #  - subnet-0a6c6cf8b47346f20
-    #aws_certificate_arn: arn:aws:acm:us-east-1:231431240278:certificate/a7c5b5cc-66c7-4b48-9df2-d3007d2e4a6d
-    #aws_r53_hosted_zone_id: Z0119470FB4KZWFUOWZB
-    #enable_proxy: yes
-    
     # Immuta k8s namespace
     immuta_namespace: immuta
 
@@ -54,7 +43,6 @@
     #Connect an initial Postgresql instance to trino, e.g.
     rds_uri: jdbc:postgresql://demo.cfzynskvahpp.us-east-1.rds.amazonaws.com:5432/postgres
     rds_password: "{{ lookup('env', 'RDS_PASSWORD') | default('postgres', True) }}"
-    
 
     trino_namespace: trino
     trino_image: registry.immuta.com/immuta/immuta-trino
@@ -62,4 +50,4 @@
     trino_immuta_catalog_name: immuta
 
     # Seed an immuta license
-    immuta_license: 
+    #immuta_license: 
