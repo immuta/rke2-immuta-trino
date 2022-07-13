@@ -6,7 +6,7 @@ variables:
     trino_version: 389
     helm_version: v3.9.0
     rke2_version: v1.23.8
-    rke2_release: '%2Brke2r2'
+    rke2_release: '%2Brke2r1'
     cli_version: v1.0.0
     k9s_version: v0.35.21
 
