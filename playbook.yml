@@ -10,11 +10,11 @@
   vars:
     #External immuta URL
     immuta_url: reb.immuta.ps
-    immuta_version: 2022.1.3
+    immuta_version: 2022.2.0
 
     # External Trino URL
     trino_url: reb-trino.immuta.ps
-    trino_version: 387
+    trino_version: 389
 
     helm_version: v3.9.0
     immuta_deploy_tools_version: 2.1.5
@@ -58,7 +58,7 @@
 
     trino_namespace: trino
     trino_image: registry.immuta.com/immuta/immuta-trino
-    trino_image_tag: 387
+    trino_image_tag: 389
     trino_immuta_catalog_name: immuta
 
     # Seed an immuta license

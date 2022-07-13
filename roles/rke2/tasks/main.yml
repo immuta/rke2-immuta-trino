@@ -80,14 +80,14 @@
   tags:
     - rke2
 
-#- name: Copy manifest to correct location
-#  ansible.builtin.copy:
-#    src: "{{ item }}"
-#    dest: /var/lib/rancher/rke2/server/manifests
-#    owner: root
-#    group: root
-#    mode: '0644'
-#  loop:
-#    - rke2-ingress-nginx.yaml 
-  #tags:
-  #  - rke2
+- name: Copy manifest to correct location
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: /var/lib/rancher/rke2/server/manifests
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - rke2-ingress-nginx.yaml 
+  tags:
+    - rke2
