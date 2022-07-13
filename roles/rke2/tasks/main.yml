@@ -88,6 +88,6 @@
     group: root
     mode: '0644'
   loop:
-    - rke2-ingress-nginx.yaml 
+    - rke2-ingress-nginx-conf.yaml
   tags:
     - rke2
